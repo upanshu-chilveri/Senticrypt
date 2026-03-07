@@ -1,0 +1,486 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🔐 Senticrypt</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'senticrypt/css/style.css' %}">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-avatar">🧠</div>
+    <div class="header-info">
+      <h1>Senticrypt</h1>
+      <p><span class="status-dot"></span>Emotion-Aware Encryption • DistilRoBERTa</p>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div class="messages" id="messages">
+    <div class="welcome" id="welcome">
+      <div class="welcome-icon">🔐</div>
+      <h2>Emotion-Aware Encryption</h2>
+      <p>Type any text to analyse its emotions and encrypt it. Paste an encrypted payload back to decrypt it.</p>
+      <div class="suggestions">
+        <button class="suggestion-chip" onclick="useSuggestion(this)">I'm so excited about today!</button>
+        <button class="suggestion-chip" onclick="useSuggestion(this)">This makes me really angry.</button>
+        <button class="suggestion-chip" onclick="useSuggestion(this)">I feel a bit sad and lonely.</button>
+        <button class="suggestion-chip" onclick="useSuggestion(this)">Wow, I did not see that coming!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input Bar -->
+  <div class="input-bar" style="position:relative;">
+
+    <!-- Emoji Picker -->
+    <div class="emoji-picker" id="emojiPicker">
+      <div class="emoji-category">Smileys</div>
+      <div class="emoji-grid">
+        <span class="emoji-item" onclick="insertEmoji('😀')">😀</span>
+        <span class="emoji-item" onclick="insertEmoji('😂')">😂</span>
+        <span class="emoji-item" onclick="insertEmoji('😍')">😍</span>
+        <span class="emoji-item" onclick="insertEmoji('🥰')">🥰</span>
+        <span class="emoji-item" onclick="insertEmoji('😊')">😊</span>
+        <span class="emoji-item" onclick="insertEmoji('🤔')">🤔</span>
+        <span class="emoji-item" onclick="insertEmoji('😎')">😎</span>
+        <span class="emoji-item" onclick="insertEmoji('😢')">😢</span>
+        <span class="emoji-item" onclick="insertEmoji('😡')">😡</span>
+        <span class="emoji-item" onclick="insertEmoji('🤯')">🤯</span>
+        <span class="emoji-item" onclick="insertEmoji('🥳')">🥳</span>
+        <span class="emoji-item" onclick="insertEmoji('😴')">😴</span>
+      </div>
+      <div class="emoji-category">Gestures</div>
+      <div class="emoji-grid">
+        <span class="emoji-item" onclick="insertEmoji('👋')">👋</span>
+        <span class="emoji-item" onclick="insertEmoji('👍')">👍</span>
+        <span class="emoji-item" onclick="insertEmoji('👎')">👎</span>
+        <span class="emoji-item" onclick="insertEmoji('❤️')">❤️</span>
+        <span class="emoji-item" onclick="insertEmoji('🙏')">🙏</span>
+        <span class="emoji-item" onclick="insertEmoji('👏')">👏</span>
+        <span class="emoji-item" onclick="insertEmoji('🤝')">🤝</span>
+        <span class="emoji-item" onclick="insertEmoji('✌️')">✌️</span>
+      </div>
+      <div class="emoji-category">Emotions</div>
+      <div class="emoji-grid">
+        <span class="emoji-item" onclick="insertEmoji('😄')">😄</span>
+        <span class="emoji-item" onclick="insertEmoji('😨')">😨</span>
+        <span class="emoji-item" onclick="insertEmoji('🤢')">🤢</span>
+        <span class="emoji-item" onclick="insertEmoji('😲')">😲</span>
+        <span class="emoji-item" onclick="insertEmoji('😐')">😐</span>
+        <span class="emoji-item" onclick="insertEmoji('💔')">💔</span>
+        <span class="emoji-item" onclick="insertEmoji('🔥')">🔥</span>
+        <span class="emoji-item" onclick="insertEmoji('✨')">✨</span>
+      </div>
+    </div>
+
+    <div class="input-wrap">
+      <button class="emoji-btn" id="emojiToggle" title="Emoji picker" onclick="toggleEmojiPicker()">😊</button>
+      <textarea
+        id="msgInput"
+        placeholder="Type text to encrypt — or paste a payload to decrypt…"
+        rows="1"
+        onkeydown="handleKey(event)"
+        oninput="onInputChange()"
+      ></textarea>
+      <button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled title="Send">
+        <svg width="18" height="18" viewBox="0 0 24 24">
+          <line x1="22" y1="2" x2="11" y2="13"/>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Mode hint shown below input -->
+    <div class="input-hint" id="inputHint"></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const messagesEl = document.getElementById('messages');
+  const inputEl    = document.getElementById('msgInput');
+  const sendBtn    = document.getElementById('sendBtn');
+  const hintEl     = document.getElementById('inputHint');
+
+  const EMOTION_COLORS = {
+    joy:'#F5A623', anger:'#E84040', sadness:'#4A90D9',
+    fear:'#9B59B6', disgust:'#27AE60', surprise:'#E67E22', neutral:'#95A5A6'
+  };
+  const EMOTION_EMOJI = {
+    joy:'😄', anger:'😡', sadness:'😢',
+    fear:'😨', disgust:'🤢', surprise:'😲', neutral:'😐'
+  };
+
+  // ── Fernet token detection ──────────────────────────────────
+  // Fernet tokens are URL-safe base64, always 100+ chars, no spaces
+  function isEncryptedPayload(text) {
+    return /^[A-Za-z0-9\-_=]{100,}$/.test(text.trim());
+  }
+
+  // ── Input handling ──────────────────────────────────────────
+  function onInputChange() {
+    const val = inputEl.value;
+    // auto-resize
+    inputEl.style.height = 'auto';
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + 'px';
+
+    sendBtn.disabled = !val.trim();
+
+    // Show mode hint
+    if (val.trim().length > 20 && isEncryptedPayload(val)) {
+      hintEl.textContent = '🔓 Encrypted payload detected — will decrypt';
+      hintEl.className = 'input-hint hint-decrypt';
+    } else if (val.trim()) {
+      hintEl.textContent = '🔐 Will analyse emotions and encrypt';
+      hintEl.className = 'input-hint hint-encrypt';
+    } else {
+      hintEl.textContent = '';
+      hintEl.className = 'input-hint';
+    }
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (!sendBtn.disabled) sendMessage(); }
+  }
+
+  function useSuggestion(btn) {
+    inputEl.value = btn.textContent.trim();
+    inputEl.focus();
+    onInputChange();
+  }
+
+  // ── Emoji Picker ────────────────────────────────────────────
+  function toggleEmojiPicker() { document.getElementById('emojiPicker').classList.toggle('open'); }
+
+  function insertEmoji(emoji) {
+    const s = inputEl.selectionStart, e = inputEl.selectionEnd;
+    inputEl.value = inputEl.value.slice(0, s) + emoji + inputEl.value.slice(e);
+    inputEl.selectionStart = inputEl.selectionEnd = s + emoji.length;
+    inputEl.focus();
+    onInputChange();
+  }
+
+  document.addEventListener('click', (e) => {
+    const picker = document.getElementById('emojiPicker');
+    const toggle = document.getElementById('emojiToggle');
+    if (!picker.contains(e.target) && e.target !== toggle) picker.classList.remove('open');
+  });
+
+  // ── Send — auto-routes to encrypt or decrypt ─────────────────
+  async function sendMessage() {
+    const text = inputEl.value.trim();
+    if (!text) return;
+
+    const welcome = document.getElementById('welcome');
+    if (welcome) welcome.remove();
+
+    // Show user bubble (truncate very long payloads for display)
+    const displayText = text.length > 80 ? text.slice(0, 80) + '…' : text;
+    appendUserBubble(displayText);
+
+    inputEl.value = '';
+    inputEl.style.height = 'auto';
+    hintEl.textContent = '';
+    hintEl.className = 'input-hint';
+    sendBtn.disabled = true;
+    inputEl.focus();
+
+    const tid = showTyping();
+
+    if (isEncryptedPayload(text)) {
+      await runDecrypt(text, tid);
+    } else {
+      await runEncrypt(text, tid);
+    }
+  }
+
+  // ── Encrypt flow ─────────────────────────────────────────────
+  async function runEncrypt(text, tid) {
+    try {
+      const res = await fetch('/api/analyse/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      });
+      removeTyping(tid);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Server error' }));
+        appendErrorBubble(err.error || 'Something went wrong');
+        return;
+      }
+      appendEncryptBubble(await res.json());
+    } catch {
+      removeTyping(tid);
+      appendErrorBubble('Could not reach the server. Is FastAPI running on port 8001?');
+      showToast('Connection error');
+    }
+  }
+
+  // ── Decrypt flow ─────────────────────────────────────────────
+  async function runDecrypt(payload, tid) {
+    try {
+      const res = await fetch('/api/decrypt/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payload }),
+      });
+      removeTyping(tid);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Server error' }));
+        appendErrorBubble(err.error || 'Decryption failed — make sure the payload was encrypted in this session');
+        return;
+      }
+      appendDecryptBubble(await res.json());
+    } catch {
+      removeTyping(tid);
+      appendErrorBubble('Could not reach the server. Is FastAPI running on port 8001?');
+      showToast('Connection error');
+    }
+  }
+
+  // ── Bubble: user ─────────────────────────────────────────────
+  function appendUserBubble(text) {
+    const row = document.createElement('div');
+    row.className = 'msg-row user';
+    const col = document.createElement('div');
+    col.className = 'msg-col';
+    col.innerHTML = '<div class="bubble user">' + escapeHtml(text) + '</div>'
+                  + '<div class="timestamp">' + formatTime(new Date()) + '</div>';
+    const av = document.createElement('div');
+    av.className = 'avatar user';
+    av.textContent = '🙂';
+    row.appendChild(av);
+    row.appendChild(col);
+    messagesEl.appendChild(row);
+    scrollToBottom();
+  }
+
+  // ── Bubble: error ─────────────────────────────────────────────
+  function appendErrorBubble(msg) {
+    const row = document.createElement('div');
+    row.className = 'msg-row bot';
+    const col = document.createElement('div');
+    col.className = 'msg-col';
+    col.innerHTML = '<div class="bubble bot">⚠️ ' + escapeHtml(msg) + '</div>'
+                  + '<div class="timestamp">' + formatTime(new Date()) + '</div>';
+    const av = document.createElement('div');
+    av.className = 'avatar bot';
+    av.textContent = '🧠';
+    row.appendChild(av);
+    row.appendChild(col);
+    messagesEl.appendChild(row);
+    scrollToBottom();
+  }
+
+  // ── Bubble: encrypt result ────────────────────────────────────
+  function appendEncryptBubble(data) {
+    const { emotion_labels, emotion_embedding, encrypted_payload } = data;
+    const paired = emotion_labels
+      .map((l, i) => ({ label: l, score: emotion_embedding[i] }))
+      .sort((a, b) => b.score - a.score);
+
+    const top      = paired[0];
+    const topEmoji = EMOTION_EMOJI[top.label.toLowerCase()] || '🙂';
+    const payloadId = 'payload-' + Date.now();
+
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble bot result-bubble';
+
+    // Dominant row
+    const dominant = document.createElement('div');
+    dominant.className = 'result-dominant';
+    dominant.innerHTML = topEmoji + ' Dominant emotion: <strong>' + top.label + '</strong>'
+      + '<span class="dominant-pct">' + (top.score * 100).toFixed(1) + '%</span>';
+    bubble.appendChild(dominant);
+
+    // Breakdown label
+    const bLabel = document.createElement('div');
+    bLabel.className = 'result-section-label';
+    bLabel.textContent = '🎭 Full Breakdown';
+    bubble.appendChild(bLabel);
+
+    // Bars
+    const barsEl = document.createElement('div');
+    barsEl.className = 'emotion-bars';
+    paired.forEach(({ label, score }) => {
+      const pct   = (score * 100).toFixed(1);
+      const color = EMOTION_COLORS[label.toLowerCase()] || '#8B6F47';
+      const emoji = EMOTION_EMOJI[label.toLowerCase()]  || '🙂';
+      const barRow = document.createElement('div');
+      barRow.className = 'emotion-bar-row';
+      barRow.innerHTML = '<div class="emotion-bar-label">' + emoji + ' ' + label + '</div>'
+        + '<div class="emotion-bar-track"><div class="emotion-bar-fill" style="width:0%;background:' + color + ';" data-target="' + pct + '"></div></div>'
+        + '<div class="emotion-bar-pct">' + pct + '%</div>';
+      barsEl.appendChild(barRow);
+    });
+    bubble.appendChild(barsEl);
+
+    // Payload label
+    const pLabel = document.createElement('div');
+    pLabel.className = 'result-section-label';
+    pLabel.textContent = '🔒 Encrypted Payload';
+    bubble.appendChild(pLabel);
+
+    // Payload box
+    const pBox = document.createElement('div');
+    pBox.className = 'payload-box';
+    pBox.id = payloadId;
+    pBox.textContent = encrypted_payload;
+    bubble.appendChild(pBox);
+
+    // Copy button
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'copy-btn';
+    copyBtn.textContent = '📋 Copy payload';
+    copyBtn.onclick = () => copyText(payloadId, copyBtn);
+    bubble.appendChild(copyBtn);
+
+    // Assemble row
+    const col = document.createElement('div');
+    col.className = 'msg-col';
+    col.appendChild(bubble);
+    const ts = document.createElement('div');
+    ts.className = 'timestamp';
+    ts.textContent = formatTime(new Date());
+    col.appendChild(ts);
+
+    const av = document.createElement('div');
+    av.className = 'avatar bot';
+    av.textContent = '🧠';
+
+    const row = document.createElement('div');
+    row.className = 'msg-row bot';
+    row.appendChild(av);
+    row.appendChild(col);
+    messagesEl.appendChild(row);
+    scrollToBottom();
+
+    // Animate bars
+    requestAnimationFrame(() => {
+      bubble.querySelectorAll('.emotion-bar-fill').forEach(b => { b.style.width = b.dataset.target + '%'; });
+    });
+  }
+
+  // ── Bubble: decrypt result ────────────────────────────────────
+  function appendDecryptBubble(data) {
+    const { original_text, emotion_labels, emotion_embedding } = data;
+    const paired = emotion_labels
+      .map((l, i) => ({ label: l, score: emotion_embedding[i] }))
+      .sort((a, b) => b.score - a.score);
+
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble bot result-bubble';
+
+    // Decrypted badge
+    const badge = document.createElement('div');
+    badge.className = 'result-dominant';
+    badge.innerHTML = '🔓 Decrypted successfully';
+    bubble.appendChild(badge);
+
+    // Original text label
+    const tLabel = document.createElement('div');
+    tLabel.className = 'result-section-label';
+    tLabel.textContent = '📝 Original Text';
+    bubble.appendChild(tLabel);
+
+    // Original text box
+    const tBox = document.createElement('div');
+    tBox.className = 'original-text-box';
+    tBox.textContent = original_text;
+    bubble.appendChild(tBox);
+
+    // Emotions label
+    const eLabel = document.createElement('div');
+    eLabel.className = 'result-section-label';
+    eLabel.textContent = '🎭 Emotions';
+    bubble.appendChild(eLabel);
+
+    // Bars
+    const barsEl = document.createElement('div');
+    barsEl.className = 'emotion-bars';
+    paired.forEach(({ label, score }) => {
+      const pct   = (score * 100).toFixed(1);
+      const color = EMOTION_COLORS[label.toLowerCase()] || '#8B6F47';
+      const emoji = EMOTION_EMOJI[label.toLowerCase()]  || '🙂';
+      const barRow = document.createElement('div');
+      barRow.className = 'emotion-bar-row';
+      barRow.innerHTML = '<div class="emotion-bar-label">' + emoji + ' ' + label + '</div>'
+        + '<div class="emotion-bar-track"><div class="emotion-bar-fill" style="width:0%;background:' + color + ';" data-target="' + pct + '"></div></div>'
+        + '<div class="emotion-bar-pct">' + pct + '%</div>';
+      barsEl.appendChild(barRow);
+    });
+    bubble.appendChild(barsEl);
+
+    // Assemble row
+    const col = document.createElement('div');
+    col.className = 'msg-col';
+    col.appendChild(bubble);
+    const ts = document.createElement('div');
+    ts.className = 'timestamp';
+    ts.textContent = formatTime(new Date());
+    col.appendChild(ts);
+
+    const av = document.createElement('div');
+    av.className = 'avatar bot';
+    av.textContent = '🧠';
+
+    const row = document.createElement('div');
+    row.className = 'msg-row bot';
+    row.appendChild(av);
+    row.appendChild(col);
+    messagesEl.appendChild(row);
+    scrollToBottom();
+
+    requestAnimationFrame(() => {
+      bubble.querySelectorAll('.emotion-bar-fill').forEach(b => { b.style.width = b.dataset.target + '%'; });
+    });
+  }
+
+  // ── Typing indicator ─────────────────────────────────────────
+  let tc = 0;
+  function showTyping() {
+    const id = ++tc;
+    const av = document.createElement('div');
+    av.className = 'avatar bot'; av.textContent = '🧠';
+    const bub = document.createElement('div');
+    bub.className = 'typing-bubble';
+    bub.innerHTML = '<span></span><span></span><span></span>';
+    const row = document.createElement('div');
+    row.className = 'msg-row bot'; row.id = 'typing-' + id;
+    row.appendChild(av); row.appendChild(bub);
+    messagesEl.appendChild(row); scrollToBottom(); return id;
+  }
+  function removeTyping(id) { const el = document.getElementById('typing-' + id); if (el) el.remove(); }
+
+  // ── Helpers ───────────────────────────────────────────────────
+  function scrollToBottom() { messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: 'smooth' }); }
+  function formatTime(d)    { return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+  function escapeHtml(t)    { return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function copyText(elId, btn) {
+    const text = document.getElementById(elId).textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = '✅ Copied!';
+      setTimeout(() => { btn.textContent = '📋 Copy payload'; }, 2000);
+    });
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+</script>
+</body>
+</html>

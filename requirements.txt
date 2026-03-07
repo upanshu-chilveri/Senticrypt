@@ -9,5 +9,15 @@ pydantic==2.8.2
 # Django frontend
 django==5.1.1
 
+# Emotion model
+transformers==4.44.0
+torch==2.4.0
+
+# Encryption
+cryptography==43.0.1
+
+# Numerics
+numpy==1.26.4
+
 # HTTP client (optional, for testing)
 httpx==0.27.2

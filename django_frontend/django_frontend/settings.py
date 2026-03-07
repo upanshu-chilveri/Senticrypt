@@ -8,7 +8,7 @@ ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
     "django.contrib.staticfiles",
-    "chatapp",
+    "senticrypt",
 ]
 
 MIDDLEWARE = [
@@ -32,6 +32,11 @@ TEMPLATES = [
 ]
 
 STATIC_URL = "/static/"
+
+# Tells Django where to look for static files in development
+STATICFILES_DIRS = [
+    BASE_DIR / "senticrypt" / "static",
+]
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
