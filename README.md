@@ -10,6 +10,8 @@ The result is an emotion-aware encryption pipeline that not only protects the co
 
 The system uses a RoBERTa-based emotion classifier, vector embeddings derived from emotional states, and a dual key encryption architecture to securely transform messages while preserving contextual meaning.
 
+### Access at - https://senticrypt-deploymenet-q76y7kb9h-upanshu-chilveris-projects.vercel.app
+
 ---
 
 ## Problem Statement
