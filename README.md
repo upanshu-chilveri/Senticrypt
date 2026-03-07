@@ -1,72 +1,114 @@
-# 💬 ChatApp — FastAPI + Django
 
-A beautiful cream-coloured chat application where Django serves the frontend and FastAPI handles message processing.
+# Senticrypt
+Emotion-Aware Dual-Key Encryption System
 
-## Architecture
+Senticrypt is a hackathon project that introduces a new approach to secure communication by combining Natural Language Processing (NLP) and cryptography.
 
-```
-Browser → Django (port 8000) → FastAPI (port 8001)
-                                    ↓
-                           process_message(str) → str
-```
+Instead of treating messages as plain text before encryption, Senticrypt first analyzes the emotional context of the sentence, converts that emotion into vector embeddings, and then integrates the emotional representation into a dual-key encryption mechanism.
 
-## Quick Start
+The result is an emotion-aware encryption pipeline that not only protects the content of a message but also encodes its emotional signature in a secure, structured form.
+
+The system uses a RoBERTa-based emotion classifier, vector embeddings derived from emotional states, and a dual key encryption architecture to securely transform messages while preserving contextual meaning.
+
+---
+
+## Problem Statement
+
+Traditional encryption systems treat messages as pure data, ignoring contextual meaning such as tone, sentiment, or emotion.
+
+However, in many communication systems:
+
+Emotional context influences interpretation
+
+Messages may require semantic awareness
+
+Security systems rarely integrate AI-based language understanding
+
+Senticrypt addresses this gap by introducing a semantic preprocessing layer before encryption.
+
+---
+
+# Core Idea
+
+Senticrypt performs the following steps:
+
+* A user inputs a message.
+
+* The message is analyzed using RoBERTa emotion classification.
+
+* The detected emotion is converted into a vector embedding.
+
+* The emotional vector contributes to the encryption pipeline.
+
+* The encrypted output is generated using dual-key encryption.
+
+* The emotion is visualized using emoji representation.
+
+* This creates a pipeline where emotion becomes part of the encrypted representation of the message.
+
+<img height="640" alt="ChatGPT Image Mar 7, 2026, 03_53_26 PM" src="https://github.com/user-attachments/assets/5a6e7230-860c-4656-b60d-a885c4250a42" />
+
+
+# Demo Video is in Project Repo
+
+## Installation
+
+#### CLI Implementation
+
+The CLI is named "Senticrypt_cli.py"
+
+Run the Python file and a CLI version of the app can be used.
+
+
+
+#### Local download
+Clone the repository
 
 ```bash
-# 1. Install dependencies
+git clone https://github.com/upanshu-chilveri/Senticrypt.git
+```
+
+Move into the directory
+
+```bash
+cd Senticrypt
+```
+
+Install dependencies
+
+```bash
 pip install -r requirements.txt
-
-# 2. Start both servers (Linux/macOS)
-chmod +x start.sh
-./start.sh
-
-# Or start manually in two terminals:
-
-# Terminal 1 — FastAPI backend
-cd fastapi_backend
-uvicorn main:app --port 8001 --reload
-
-# Terminal 2 — Django frontend
-cd django_frontend
-python manage.py runserver 8000
 ```
 
-Open **http://127.0.0.1:8000** in your browser.
+Run the backend server
 
-## Customising the Processing Function
-
-Edit `fastapi_backend/main.py` → `process_message(text: str) -> str`
-
-The function receives the user's input string and must return a reply string.
-All the routing, templating, and UI glue is handled for you.
-
-## Project Structure
-
-```
-chat_app/
-├── requirements.txt
-├── start.sh
-├── fastapi_backend/
-│   └── main.py          ← FastAPI app + process_message()
-└── django_frontend/
-    ├── manage.py
-    ├── django_frontend/
-    │   ├── settings.py
-    │   └── urls.py
-    └── chatapp/
-        ├── views.py     ← proxies to FastAPI
-        ├── urls.py
-        └── templates/
-            └── chatapp/
-                └── index.html  ← cream chat UI
+```bash
+python manage.py runserver
 ```
 
-## Features
+---
+# Encryption Pipeline
 
-- 🎨 Cream-coloured UI with warm brown accents
-- 😊 Built-in emoji picker
-- ⌨️ Shift+Enter for newlines, Enter to send
-- 💬 Typing indicator animation
-- 🔄 Auto-resizing textarea
-- 📱 Responsive design
-- ⚡ FastAPI async backend
+The encryption pipeline integrates semantic analysis with cryptographic transformation.
+
+* Step 1
+User enters text.
+
+* Step 2
+RoBERTa processes the text and predicts the emotional class.
+
+* Step 3
+Emotion is converted into an embedding vector.
+
+* Step 4
+A secondary encryption key is derived from the vector.
+
+* Step 5
+Message encryption occurs using:
+
+Primary Key
++
+Emotion-Derived Secondary Key
+
+* Step 6
+Encrypted output is generated.
