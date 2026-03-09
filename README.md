@@ -4,6 +4,31 @@ Emotion-Aware Dual-Key Encryption System
 
 Senticrypt is a hackathon project that introduces a new approach to secure communication by combining Natural Language Processing (NLP) and cryptography.
 
+
+### Tech Stack
+
+* Django
+
+* FastApi
+
+* RoBERTa - Emotion Analysis
+
+* NumPy
+
+### Deployment 
+
+* Railway - Backend
+
+* Vercel - Frontend
+
+
+<img height="640" alt="ChatGPT Image Mar 7, 2026, 03_53_26 PM" src="https://github.com/user-attachments/assets/af7da1c6-b9fa-4ce4-be32-bd185632f527" />
+
+
+<img height="640" alt="ChatGPT Image Mar 7, 2026, 03_53_26 PM" src="https://github.com/user-attachments/assets/ce8ebdfd-3b3b-4b29-b634-57116f6ad94d" />
+
+
+
 Instead of treating messages as plain text before encryption, Senticrypt first analyzes the emotional context of the sentence, converts that emotion into vector embeddings, and then integrates the emotional representation into a dual-key encryption mechanism.
 
 The result is an emotion-aware encryption pipeline that not only protects the content of a message but also encodes its emotional signature in a secure, structured form.
